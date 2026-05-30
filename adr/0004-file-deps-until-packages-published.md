@@ -1,8 +1,14 @@
 # ADR-0004: Consume shared frontend packages via local `file:` deps until published
 
-- **Status:** Accepted (interim)
+- **Status:** Superseded (resolved) — packages published; apps now consume versioned deps
 - **Date:** 2026-05-30
 - **Deciders:** solo dev (OneLifeStack)
+
+> **Resolved (2026-05-30):** `@onelifestack/core` + `/ui` are published to GitHub Packages (via a
+> manual-dispatch CI workflow using the workflow token). The apps now depend on `^0.1.0` from the
+> registry, their Dockerfiles are standard single-context `npm install` builds (a `read:packages`
+> token passed as a BuildKit secret), and the four interim Docker workarounds below are **removed**.
+> The history is kept for context.
 
 ## Context
 
