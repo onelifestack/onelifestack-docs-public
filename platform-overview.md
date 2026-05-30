@@ -37,7 +37,11 @@ The foundation is in place and the first vertical slice is live in a development
 end-to-end from a browser: sign-in → identity token → portal → People service → database → back.
 
 The **event backbone** is also live: the People service emits `person.*` events through a
-transactional outbox to the event broker, and a dedicated **Search service** consumes them into an
-owner-scoped full-text index — so a person becomes searchable in the portal moments after they're
-created. That closes the full event round-trip (produce → broker → consume → project → query).
-Build progresses domain by domain from there.
+transactional outbox to the event broker, and **two independent consumers** react — a **Search**
+service (owner-scoped full-text index, so a person is searchable in the portal moments after
+creation) and a **Notification** service (owner-scoped in-app notifications). One event fans out to
+both (each its own consumer group), closing the full round-trip: produce → broker → consume →
+project → query.
+
+**Observability** is wired across the services: Prometheus metrics (RED + JVM) scraped into Grafana,
+and error tracking via Sentry. Build progresses domain by domain from there.

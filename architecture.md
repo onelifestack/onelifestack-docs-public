@@ -78,6 +78,9 @@ C4Container
   (separate consumer groups). One event, multiple reactions. Auth enforced everywhere
   (unauthenticated → 403).
 
+**Observability** — every service exposes Prometheus metrics (scraped into Grafana) and reports
+errors to Sentry (SaaS). See [ADR-0006](adr/0006-observability-prometheus-sentry.md).
+
 ---
 
 ## Level 2 — Containers (target state)

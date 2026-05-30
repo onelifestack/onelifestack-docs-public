@@ -13,6 +13,7 @@ New decision → copy [`0000-template.md`](0000-template.md), take the next numb
 | [0003](0003-db-per-service-no-cross-db-joins.md) | DB-per-service, no cross-DB joins; integrate via events + APIs | Accepted |
 | [0004](0004-file-deps-until-packages-published.md) | Shared frontend packages via `file:` deps until published | Superseded (resolved) |
 | [0005](0005-search-engine-postgres-fts.md) | Search engine: Postgres full-text search (not a dedicated engine) | Accepted |
+| [0006](0006-observability-prometheus-sentry.md) | Observability: Prometheus/Grafana metrics + Sentry (SaaS) errors | Accepted |
 
 > More decisions worth backfilling as ADRs over time: Kafka + outbox as the event backbone;
 > production hosting choices; strangler-by-domain decomposition.

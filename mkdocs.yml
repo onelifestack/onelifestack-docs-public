@@ -58,6 +58,7 @@ nav:
       - 0003 DB per service: adr/0003-db-per-service-no-cross-db-joins.md
       - 0004 file deps until published: adr/0004-file-deps-until-packages-published.md
       - 0005 search engine (Postgres FTS): adr/0005-search-engine-postgres-fts.md
+      - 0006 observability (Prometheus + Sentry): adr/0006-observability-prometheus-sentry.md
 
 plugins:
   - search
