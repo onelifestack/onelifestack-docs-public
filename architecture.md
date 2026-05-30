@@ -51,9 +51,11 @@ C4Container
     Container(portal, "onelifestack-portal", "React + Vite SPA on nginx", "Launcher + People center (search) + Account. Built on @onelifestack/ui + /core")
     Container(people, "identity-people-service", "Spring Boot 3.4 / Java 21", "Canonical People graph: resolve, suggestions, reversible merge/unmerge. Emits person.* via a transactional outbox")
     Container(search, "search-service", "Spring Boot 3.4 / Java 21", "Consumes person.* → owner-scoped full-text index; search API")
+    Container(notify, "notification-service", "Spring Boot 3.4 / Java 21", "Consumes person.* → owner-scoped in-app notifications; feed API")
     ContainerQueue(kafka, "Kafka (KRaft)", "event broker", "person.* topics")
     ContainerDb(identitydb, "identity DB", "PostgreSQL", "person graph + outbox")
     ContainerDb(searchdb, "search DB", "PostgreSQL", "full-text people index")
+    ContainerDb(notifydb, "notification DB", "PostgreSQL", "notifications")
   }
 
   Rel(user, portal, "Loads SPA", "HTTPS")
@@ -63,14 +65,18 @@ C4Container
   Rel(people, firebase, "Verifies token", "Admin SDK")
   Rel(people, identitydb, "Reads/writes (+ outbox, same tx)", "JDBC")
   Rel(people, kafka, "Outbox relay publishes person.*", "producer")
-  Rel(kafka, search, "Consumes person.*", "consumer")
+  Rel(kafka, search, "Consumes (own group)", "consumer")
+  Rel(kafka, notify, "Consumes (own group)", "consumer")
   Rel(search, searchdb, "Upsert/remove + search", "JDBC")
+  Rel(notify, notifydb, "Create + read notifications", "JDBC")
 ```
 
 **Proven end-to-end both ways:**
 - **Sync path** — Google sign-in → token → portal → people service → database → browser.
-- **Event path** — resolve a person → outbox (same tx) → broker → search consumes → index →
-  owner-scoped search API → portal. Auth enforced everywhere (unauthenticated → 403).
+- **Event path with fan-out** — resolve a person → outbox (same tx) → broker → **both** Search
+  (→ index → portal search) **and** Notifications (→ in-app notification) consume independently
+  (separate consumer groups). One event, multiple reactions. Auth enforced everywhere
+  (unauthenticated → 403).
 
 ---
 
