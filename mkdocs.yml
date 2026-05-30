@@ -1,0 +1,62 @@
+site_name: OneLifeStack Engineering Docs
+site_description: Public architecture, design decisions, and engineering story for OneLifeStack.
+repo_url: https://github.com/onelifestack/onelifestack-docs-public
+repo_name: onelifestack/onelifestack-docs-public
+
+# The Markdown lives at the repo root; scripts/stage-docs.sh copies it into ./docs before building
+# (MkDocs requires docs_dir to be a child of the config). ./docs is gitignored.
+docs_dir: docs
+site_dir: site
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.instant
+    - content.code.copy
+    - search.suggest
+    - search.highlight
+    - toc.follow
+
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+
+nav:
+  - Home: README.md
+  - Platform overview: platform-overview.md
+  - Architecture: architecture.md
+  - Decisions (ADRs):
+      - Overview: adr/README.md
+      - 0001 Firebase single IdP: adr/0001-firebase-single-idp.md
+      - 0002 ADC vs mounted key: adr/0002-adc-vs-sealed-sa-key.md
+      - 0003 DB per service: adr/0003-db-per-service-no-cross-db-joins.md
+      - 0004 file deps until published: adr/0004-file-deps-until-packages-published.md
+
+plugins:
+  - search

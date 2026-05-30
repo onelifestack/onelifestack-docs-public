@@ -1,0 +1,5 @@
+# Docs site toolchain. Local:
+#   python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt
+#   bash scripts/stage-docs.sh && mkdocs serve
+mkdocs-material>=9.5
+pymdown-extensions>=10.7
