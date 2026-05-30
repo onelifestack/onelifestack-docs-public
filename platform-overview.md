@@ -35,4 +35,9 @@ See the [architecture diagrams](architecture.md) for the C4 context and containe
 
 The foundation is in place and the first vertical slice is live in a development cluster, proven
 end-to-end from a browser: sign-in → identity token → portal → People service → database → back.
+
+The **event backbone** is also live: the People service emits `person.*` events through a
+transactional outbox to the event broker, and a dedicated **Search service** consumes them into an
+owner-scoped full-text index — so a person becomes searchable in the portal moments after they're
+created. That closes the full event round-trip (produce → broker → consume → project → query).
 Build progresses domain by domain from there.

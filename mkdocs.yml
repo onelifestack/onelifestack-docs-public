@@ -57,6 +57,7 @@ nav:
       - 0002 ADC vs mounted key: adr/0002-adc-vs-sealed-sa-key.md
       - 0003 DB per service: adr/0003-db-per-service-no-cross-db-joins.md
       - 0004 file deps until published: adr/0004-file-deps-until-packages-published.md
+      - 0005 search engine (Postgres FTS): adr/0005-search-engine-postgres-fts.md
 
 plugins:
   - search

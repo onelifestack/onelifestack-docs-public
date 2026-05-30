@@ -36,31 +36,41 @@ C4Context
 
 ## Level 2 — Containers (current live slice)
 
-What's **actually deployed** in a k3s dev cluster today . This is the first vertical slice.
+What's **actually deployed** in a k3s dev cluster today. The first vertical slice plus the **event
+backbone** and the **first event consumer** (search) — the full event round-trip is live.
 
 ```mermaid
 C4Container
-  title Containers — Live slice (a k3s dev cluster, dev)
+  title Containers — Live slice (a k3s dev cluster)
 
   Person(user, "User", "Browser")
 
-  System_Ext(firebase, "Firebase Auth", "single IdP (dev project)")
+  System_Ext(firebase, "Firebase Auth", "single IdP")
 
-  System_Boundary(ols, "OneLifeStack (a k3s dev cluster, )") {
-    Container(portal, "onelifestack-portal", "React + Vite SPA on nginx", "Launcher + People center + Account. Built on @onelifestack/ui + /core")
-    Container(people, "identity-people-service", "Spring Boot 3.4 / Java 21", "Canonical People graph: resolve, suggestions, reversible merge/unmerge")
-    ContainerDb(identitydb, "identity DB", "PostgreSQL 17", "person, person_link, person_match_candidate, person_merge_log. Own database")
+  System_Boundary(ols, "OneLifeStack") {
+    Container(portal, "onelifestack-portal", "React + Vite SPA on nginx", "Launcher + People center (search) + Account. Built on @onelifestack/ui + /core")
+    Container(people, "identity-people-service", "Spring Boot 3.4 / Java 21", "Canonical People graph: resolve, suggestions, reversible merge/unmerge. Emits person.* via a transactional outbox")
+    Container(search, "search-service", "Spring Boot 3.4 / Java 21", "Consumes person.* → owner-scoped full-text index; search API")
+    ContainerQueue(kafka, "Kafka (KRaft)", "event broker", "person.* topics")
+    ContainerDb(identitydb, "identity DB", "PostgreSQL", "person graph + outbox")
+    ContainerDb(searchdb, "search DB", "PostgreSQL", "full-text people index")
   }
 
   Rel(user, portal, "Loads SPA", "HTTPS")
   Rel(user, firebase, "Google sign-in (popup)", "HTTPS")
-  Rel(portal, people, "Calls (Bearer ID token)", "HTTPS + CORS")
+  Rel(portal, people, "Resolve / list / merge (Bearer token)", "HTTPS + CORS")
+  Rel(portal, search, "Search people (Bearer token)", "HTTPS + CORS")
   Rel(people, firebase, "Verifies token", "Admin SDK")
-  Rel(people, identitydb, "Reads/writes", "JDBC")
+  Rel(people, identitydb, "Reads/writes (+ outbox, same tx)", "JDBC")
+  Rel(people, kafka, "Outbox relay publishes person.*", "producer")
+  Rel(kafka, search, "Consumes person.*", "consumer")
+  Rel(search, searchdb, "Upsert/remove + search", "JDBC")
 ```
 
-**Proven end-to-end:** Google sign-in → Firebase token → portal → CORS → people service → Postgres →
-back to the browser. Auth is enforced (unauthenticated `/api/v1/people` → 403).
+**Proven end-to-end both ways:**
+- **Sync path** — Google sign-in → token → portal → people service → database → browser.
+- **Event path** — resolve a person → outbox (same tx) → broker → search consumes → index →
+  owner-scoped search API → portal. Auth enforced everywhere (unauthenticated → 403).
 
 ---
 
