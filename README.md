@@ -4,6 +4,10 @@ Public engineering documentation for **OneLifeStack**, a multi-client, enterpris
 life-management platform built by a solo developer — reached through web, native mobile, wearables,
 and agents (MCP), on one identity and a canonical **People graph**.
 
+Public-facing editorial surface:
+- `blog.onelifestack.com`
+- `studio.onelifestack.com`
+
 > This is the **public** subset — architecture, design decisions, and the engineering story.
 > Operational details (deployment, infrastructure, business setup) live in a separate private repo.
 
