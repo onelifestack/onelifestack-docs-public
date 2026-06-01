@@ -52,12 +52,16 @@ See the [architecture diagrams](architecture.md) for the C4 context and containe
 The foundation is in place and the first vertical slice is live in a development cluster, proven
 end-to-end from a browser: sign-in → identity token → portal → People service → database → back.
 
-The **event backbone** is also live: the People service emits `person.*` events through a
-transactional outbox to the event broker, and **two independent consumers** react — a **Search**
-service (owner-scoped full-text index, so a person is searchable in the portal moments after
-creation) and a **Notification** service (owner-scoped in-app notifications). One event fans out to
-both (each its own consumer group), closing the full round-trip: produce → broker → consume →
-project → query.
+The **event backbone** is live: the People service emits `person.*` events through a transactional
+outbox to the event broker, and **two independent consumers** react — a **Search** service
+(owner-scoped full-text index) and a **Notification** service (owner-scoped in-app notifications).
+One event fans out to both, closing the full round-trip: produce → broker → consume → project → query.
 
-**Observability** is wired across the services: Prometheus metrics (RED + JVM) scraped into Grafana,
-and error tracking via Sentry. Build progresses domain by domain from there.
+**Observability** is wired across all services: Prometheus metrics (RED + JVM) in Grafana, error
+tracking via Sentry.
+
+**The public marketing site (`onelifestack.com`) is live** — redesigned to reflect the connected
+life platform vision, with an animated interactive life graph as the hero visual and an emotional
+narrative arc ("Your story. Connected."). Waitlist is open.
+
+Build progresses domain by domain from here — SpendStack migration is next.
