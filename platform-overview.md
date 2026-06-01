@@ -65,4 +65,8 @@ connected life platform vision: animated interactive life graph hero (with real 
 People and Memories nodes), emotional narrative arc ("Your story. Connected."), and an open
 waitlist via Formspree.
 
+**The blog (`blog.onelifestack.com`) is live** — editorial reading surface powered by Sanity CMS,
+sharing the same design system and typography as the main site. Studio at
+`studio.blog.onelifestack.com` for content authoring.
+
 Build progresses domain by domain from here — SpendStack migration is next.
