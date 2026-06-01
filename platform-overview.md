@@ -1,7 +1,23 @@
 # Platform Overview
 
-OneLifeStack is a **multi-client life-management platform** reached through web, native mobile
-(Expo), wearables, and agents (MCP), unified by one identity and a canonical People graph.
+**OneLifeStack is a connected life platform** — a personal operating system that helps people
+preserve, understand, and grow what matters most: relationships, memories, identity, experiences,
+and life story.
+
+> *Your story. Connected.*
+
+Most software organizes data. OneLifeStack organizes life. Traditional apps create silos — a
+finance app that knows nothing about your people, a journal with no memory of shared moments.
+OneLifeStack connects them through a canonical life graph (people, events, places, memories) that
+every app reads from and writes to. Apps are different lenses into a single life, not independent
+products.
+
+The platform is the hero. Individual apps are supporting characters. The long-term vision includes
+AI agents that act as life companions — contextual, caring, memory-aware — operating over the life
+graph.
+
+Reached through web, native mobile (Expo), wearables, and agents (MCP), unified by one identity
+and a canonical People graph.
 
 ## Principles
 
