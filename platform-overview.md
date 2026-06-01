@@ -60,8 +60,9 @@ One event fans out to both, closing the full round-trip: produce → broker → 
 **Observability** is wired across all services: Prometheus metrics (RED + JVM) in Grafana, error
 tracking via Sentry.
 
-**The public marketing site (`onelifestack.com`) is live** — redesigned to reflect the connected
-life platform vision, with an animated interactive life graph as the hero visual and an emotional
-narrative arc ("Your story. Connected."). Waitlist is open.
+**The public marketing site (`onelifestack.com`) is live** (`v1.16.0`) — redesigned to reflect the
+connected life platform vision: animated interactive life graph hero (with real photos in the
+People and Memories nodes), emotional narrative arc ("Your story. Connected."), and an open
+waitlist via Formspree.
 
 Build progresses domain by domain from here — SpendStack migration is next.
