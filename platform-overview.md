@@ -60,13 +60,14 @@ One event fans out to both, closing the full round-trip: produce → broker → 
 **Observability** is wired across all services: Prometheus metrics (RED + JVM) in Grafana, error
 tracking via Sentry.
 
-**The public marketing site (`onelifestack.com`) is live** (`v1.16.0`) — redesigned to reflect the
+**The public marketing site (`onelifestack.com`) is live** (`v1.18.0`) — redesigned to reflect the
 connected life platform vision: animated interactive life graph hero (with real photos in the
 People and Memories nodes), emotional narrative arc ("Your story. Connected."), and an open
 waitlist via Formspree.
 
-**The blog (`blog.onelifestack.com`) is live** — editorial reading surface powered by Sanity CMS,
-sharing the same design system and typography as the main site. Studio at
-`studio.blog.onelifestack.com` for content authoring.
+**The blog (`blog.onelifestack.com`) is live** (`v0.4.0`) — editorial reading surface powered by
+Sanity CMS. Dark nav pill, tinted section backgrounds, responsive layout, scroll-to-top, and
+consistent design language with the main site. Studio at `studio.blog.onelifestack.com` for
+content authoring (internal only).
 
 Build progresses domain by domain from here — SpendStack migration is next.
