@@ -1,23 +1,7 @@
 # Platform Overview
 
-**OneLifeStack is a connected life platform** — a personal operating system that helps people
-preserve, understand, and grow what matters most: relationships, memories, identity, experiences,
-and life story.
-
-> *Your story. Connected.*
-
-Most software organizes data. OneLifeStack organizes life. Traditional apps create silos — a
-finance app that knows nothing about your people, a journal with no memory of shared moments.
-OneLifeStack connects them through a canonical life graph (people, events, places, memories) that
-every app reads from and writes to. Apps are different lenses into a single life, not independent
-products.
-
-The platform is the hero. Individual apps are supporting characters. The long-term vision includes
-AI agents that act as life companions — contextual, caring, memory-aware — operating over the life
-graph.
-
-Reached through web, native mobile (Expo), wearables, and agents (MCP), unified by one identity
-and a canonical People graph.
+OneLifeStack is a **multi-client life-management platform** reached through web, native mobile
+(Expo), wearables, and agents (MCP), unified by one identity and a canonical People graph.
 
 ## Principles
 
@@ -47,27 +31,25 @@ and a canonical People graph.
 
 See the [architecture diagrams](architecture.md) for the C4 context and container views.
 
-## Status
+## Services live today (2026-06-05)
 
-The foundation is in place and the first vertical slice is live in a development cluster, proven
-end-to-end from a browser: sign-in → identity token → portal → People service → database → back.
+All services run in a homelab k3s dev cluster. Each owns its own Postgres database.
 
-The **event backbone** is live: the People service emits `person.*` events through a transactional
-outbox to the event broker, and **two independent consumers** react — a **Search** service
-(owner-scoped full-text index) and a **Notification** service (owner-scoped in-app notifications).
-One event fans out to both, closing the full round-trip: produce → broker → consume → project → query.
+| Service | Role |
+|---|---|
+| `identity-people-service` | Canonical People graph, onboarding, AI settings, AccessGrant |
+| `memory-service` | Memories as life-graph nodes (Journal/Trip/Milestone/Reflection/Moment) |
+| `productivity-service` | Habits with confidence-over-streaks; one-tap Today |
+| `finance-service` | Bank statement import, transaction ledger, categorization |
+| `ledger-service` | Assets, liabilities, net worth; 15 asset types; People-graph links |
+| `document-service` | Document metadata + server-side upload (PVC default, Drive optional) |
+| `template-service` | Quick-capture template marketplace (curated + community) |
+| `search-service` | Postgres FTS people search; consumes `person.*` events |
+| `notification-service` | In-app notification feed; consumes `person.*` events |
+| `onelifestack-mcp` | MCP stdio server, 12 tools — built + image pushed, not yet deployed |
 
-**Observability** is wired across all services: Prometheus metrics (RED + JVM) in Grafana, error
-tracking via Sentry.
+**Portal** (`onelifestack-portal` v0.7.0) surfaces: Life Timeline, Today (habits), Memories,
+Finances, My Legacy, People center, Template marketplace, Account.
 
-**The public marketing site (`onelifestack.com`) is live** (`v1.19.0`) — redesigned to reflect the
-connected life platform vision: animated interactive life graph hero (with real photos in the
-People and Memories nodes), emotional narrative arc ("Your story. Connected."), and an open
-waitlist via Formspree.
-
-**The blog (`blog.onelifestack.com`) is live** (`v0.4.2`) — editorial reading surface powered by
-Sanity CMS. Dark nav pill, tinted section backgrounds, responsive layout, scroll-to-top, and
-consistent design language with the main site. Studio at `studio.blog.onelifestack.com` for
-content authoring (internal only).
-
-Build progresses domain by domain from here — SpendStack migration is next.
+**Test coverage:** 197 tests across the platform — unit/slice tests + full-stack E2E tests
+(real Postgres via Zonky embedded-postgres, real HTTP through every controller → DB layer).

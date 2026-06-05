@@ -19,7 +19,7 @@ C4Context
   Person(agent, "Agent", "MCP / automation acting on a user's behalf")
 
   System_Boundary(ols, "OneLifeStack Platform") {
-    System(platform, "OneLifeStack", "Multi-client life-management platform: identity/people, apps (Spends, LifeLog, …), search, notifications")
+    System(platform, "OneLifeStack", "Connected life platform: identity/people, memory, finance, productivity, documents, search, notifications, MCP agents")
   }
 
   System_Ext(firebase, "Firebase Auth", "Single IdP — issues/verifies identity tokens (ADR-0001)")
@@ -34,58 +34,96 @@ C4Context
 
 ---
 
-## Level 2 — Containers (current live slice)
+## Level 2 — Containers (live as of 2026-06-05)
 
-What's **actually deployed** in a k3s dev cluster today. The first vertical slice plus the **event
-backbone** and the **first event consumer** (search) — the full event round-trip is live.
+All services below are deployed in a homelab k3s dev cluster. Each owns its own database; no
+cross-DB joins — services integrate via events and typed APIs only.
 
 ```mermaid
-C4Container
-  title Containers — Live slice (a k3s dev cluster)
+flowchart TB
+  user([User: browser])
+  agent([Agent / MCP])
+  firebase[[Firebase Auth — single IdP]]
 
-  Person(user, "User", "Browser")
+  subgraph edge[Edge / clients]
+    portal["onelifestack-portal\nReact + Vite SPA on nginx\nLife Timeline · Today · Memories\nFinances · My Legacy · People · Templates"]
+    comsite["onelifestack.com\nmarketing SPA"]
+    blog["onelifestack-blog\nSanity CMS blog"]
+  end
 
-  System_Ext(firebase, "Firebase Auth", "single IdP")
+  subgraph platform[Platform services — all LIVE]
+    people["identity-people-service\nCanonical People graph\nresolve · merge · AccessGrant\nonboarding · AI settings"]
+    memory["memory-service\nMemories as graph nodes\nJournal · Trip · Milestone\nOn This Day"]
+    productivity["productivity-service\nHabits + confidence %\none-tap Today"]
+    finance["finance-service\nICICI import · transactions\ncategorization + enrichment"]
+    ledger["ledger-service\nAssets · Liabilities · Net worth\n15 types · People graph links"]
+    document["document-service\nDocument metadata + upload\nserver-side storage (PVC/Drive)"]
+    template["template-service\nQuick-capture template marketplace\ncurated + community templates"]
+    search["search-service\nPostgres FTS · owner-scoped\nconsumes person.* events"]
+    notif["notification-service\nin-app notifications\nconsumes person.* events"]
+    mcp["onelifestack-mcp\nMCP stdio server · 12 tools\nbuilt + image pushed · not yet deployed"]
+  end
 
-  System_Boundary(ols, "OneLifeStack") {
-    Container(portal, "onelifestack-portal", "React + Vite SPA on nginx", "Launcher + People center (search) + Account. Built on @onelifestack/ui + /core")
-    Container(people, "identity-people-service", "Spring Boot 3.4 / Java 21", "Canonical People graph: resolve, suggestions, reversible merge/unmerge. Emits person.* via a transactional outbox")
-    Container(search, "search-service", "Spring Boot 3.4 / Java 21", "Consumes person.* → owner-scoped full-text index; search API")
-    Container(notify, "notification-service", "Spring Boot 3.4 / Java 21", "Consumes person.* → owner-scoped in-app notifications; feed API")
-    ContainerQueue(kafka, "Kafka (KRaft)", "event broker", "person.* topics")
-    ContainerDb(identitydb, "identity DB", "PostgreSQL", "person graph + outbox")
-    ContainerDb(searchdb, "search DB", "PostgreSQL", "full-text people index")
-    ContainerDb(notifydb, "notification DB", "PostgreSQL", "notifications")
-  }
+  subgraph backbone[Event backbone]
+    kafka[(Kafka KRaft)]
+  end
 
-  Rel(user, portal, "Loads SPA", "HTTPS")
-  Rel(user, firebase, "Google sign-in (popup)", "HTTPS")
-  Rel(portal, people, "Resolve / list / merge (Bearer token)", "HTTPS + CORS")
-  Rel(portal, search, "Search people (Bearer token)", "HTTPS + CORS")
-  Rel(people, firebase, "Verifies token", "Admin SDK")
-  Rel(people, identitydb, "Reads/writes (+ outbox, same tx)", "JDBC")
-  Rel(people, kafka, "Outbox relay publishes person.*", "producer")
-  Rel(kafka, search, "Consumes (own group)", "consumer")
-  Rel(kafka, notify, "Consumes (own group)", "consumer")
-  Rel(search, searchdb, "Upsert/remove + search", "JDBC")
-  Rel(notify, notifydb, "Create + read notifications", "JDBC")
+  subgraph data[Data — DB per service]
+    pgid[(identity DB)]
+    pgmem[(memory DB)]
+    pgprod[(productivity DB)]
+    pgfin[(finance DB)]
+    pgled[(ledger DB)]
+    pgdoc[(document DB)]
+    pgtpl[(template DB)]
+    pgsearch[(search DB)]
+    pgnotif[(notification DB)]
+  end
+
+  user --> portal
+  user --> comsite
+  user --> blog
+  agent --> mcp
+  portal --> people
+  portal --> memory
+  portal --> productivity
+  portal --> finance
+  portal --> ledger
+  portal --> document
+  portal --> template
+  portal --> search
+  portal --> notif
+  people --> firebase
+  people --> pgid
+  memory --> pgmem
+  productivity --> pgprod
+  finance --> pgfin
+  ledger --> pgled
+  document --> pgdoc
+  template --> pgtpl
+  search --> pgsearch
+  notif --> pgnotif
+  people -. "person.* outbox events" .-> kafka
+  memory -. "memory.* outbox events" .-> kafka
+  productivity -. "habit.* outbox events" .-> kafka
+  kafka -. consumes .-> search
+  kafka -. consumes .-> notif
+  mcp --> people
+  mcp --> search
+  mcp --> notif
 ```
 
-**Proven end-to-end both ways:**
-- **Sync path** — Google sign-in → token → portal → people service → database → browser.
-- **Event path with fan-out** — resolve a person → outbox (same tx) → broker → **both** Search
-  (→ index → portal search) **and** Notifications (→ in-app notification) consume independently
-  (separate consumer groups). One event, multiple reactions. Auth enforced everywhere
-  (unauthenticated → 403).
-
-**Observability** — every service exposes Prometheus metrics (scraped into Grafana) and reports
-errors to Sentry (SaaS). See [ADR-0006](adr/0006-observability-prometheus-sentry.md).
+**Key cross-cutting wiring:**
+- All backend services authenticate via Firebase Admin SDK (shared `onelifestack-backend-firebase` k8s secret).
+- Commons Spring Boot starter (`onelifestack-commons`) provides: auth filter, error envelope, CORS, audit logging, outbox/event relay — zero reimplementation per service.
+- `memory-service` and `ledger-service` call `identity-people-service /resolve` to link named people into the canonical graph.
+- `ledger-service` calls `identity-people-service /check` to enforce AccessGrant-based access for non-owners.
 
 ---
 
 ## Level 2 — Containers (target state)
 
-Where this is heading, per `PLATFORM-PLAN.md`. Dashed = not built yet.
+Near-term additions: MCP deployment, mobile client, SpendStack migration, LifeLog decomposition.
 
 ```mermaid
 flowchart TB
@@ -95,56 +133,43 @@ flowchart TB
 
   subgraph edge[Edge]
     portal[onelifestack-portal]
-    comsite[onelifestack.com<br/>marketing SPA]
+    comsite[onelifestack.com]
+    mobile[Expo mobile app]:::planned
   end
 
   subgraph platform[Platform services]
     people[identity-people-service]
-    bo[back-office<br/>entitlements]
-    spends[Spends]:::planned
-    lifelog[LifeLog]:::planned
-    ledger[Ledger]:::planned
-    vault[Vault]:::planned
-    search[search-service]:::planned
-    notif[notification-service]:::planned
-    mcp[onelifestack-mcp]:::planned
+    memory[memory-service]
+    productivity[productivity-service]
+    finance[finance-service]
+    ledger[ledger-service]
+    document[document-service]
+    template[template-service]
+    search[search-service]
+    notif[notification-service]
+    mcp[onelifestack-mcp]:::planned_deploy
+    health[health-service]:::planned
+    knowledge[knowledge-service]:::planned
+    places[places-service]:::planned
   end
 
   subgraph backbone[Event backbone]
-    kafka[(Kafka / KRaft)]:::planned
-  end
-
-  subgraph data[Data — DB per service]
-    pgid[(identity DB)]
-    pgsp[(spends DB)]:::planned
-    pgll[(lifelog DB)]:::planned
+    kafka[(Kafka / KRaft)]
   end
 
   user --> portal
-  user --> comsite
-  user -.-> firebase
+  user -.-> mobile
   agent --> mcp
-  portal --> people
-  portal --> bo
-  portal -.-> spends
-  portal -.-> lifelog
+  portal --> people & memory & productivity & finance & ledger & document & template & search & notif
+  mobile -.-> people
   people --> firebase
-  people --> pgid
-  spends -.-> pgsp
-  lifelog -.-> pgll
-  people -. outbox events .-> kafka
-  spends -. outbox events .-> kafka
-  kafka -. consumes .-> search
-  kafka -. consumes .-> notif
-  mcp -.-> people
+  people & memory & productivity -. outbox events .-> kafka
+  kafka -. consumes .-> search & notif & mcp
+  mcp --> people & search & notif & finance & ledger & memory
 
-  classDef planned stroke-dasharray: 5 5,opacity:0.7;
+  classDef planned stroke-dasharray: 5 5,opacity:0.6;
+  classDef planned_deploy stroke-dasharray: 3 3,opacity:0.8;
 ```
-
-Key principles encoded above (see ADRs): Firebase is the **single IdP** ([0001](adr/0001-firebase-single-idp.md));
-each service owns its **own DB, no cross-DB joins**, integrating via **events + APIs**
-([0003](adr/0003-db-per-service-no-cross-db-joins.md)); Search/Notifications are dedicated consumers
-of the event backbone.
 
 ---
 
@@ -154,19 +179,42 @@ How the client packages stack — platform-agnostic core, then per-platform UI k
 
 ```mermaid
 flowchart TD
-  core["@onelifestack/core<br/><i>auth contract, ApiClient, People/Entitlements clients, design tokens</i><br/>no React / Firebase / RN"]
-  uiweb["@onelifestack/ui<br/><i>Firebase web adapter, AuthProvider, Tailwind preset, components</i>"]
-  uinative["@onelifestack/ui-native<br/><i>RN adapter, AuthProvider, theme, components</i>"]
-  portal["onelifestack-portal (web)"]
-  comsite["onelifestack.com (web)"]
-  mobile["loggd-mobile / Expo apps"]
+  core["@onelifestack/core v0.2.5\nauth contract · ApiClient · design tokens\nPeople/Memory/Finance/Ledger/Productivity\nDocument/Template/Search/Notification clients\nno React / Firebase / RN"]
+  uiweb["@onelifestack/ui v0.1.1\nFirebase web adapter · AuthProvider\nTailwind preset · components"]
+  uinative["@onelifestack/ui-native v0.1.0\nRN adapter · AuthProvider · theme"]
+  portal["onelifestack-portal (web) v0.7.0"]
+  comsite["onelifestack.com (web) v1.19.0"]
+  mobile["Expo mobile (planned)"]:::planned
 
   core --> uiweb
   core --> uinative
   uiweb --> portal
   uiweb --> comsite
-  uinative --> mobile
+  uinative -.-> mobile
+
+  classDef planned stroke-dasharray: 5 5,opacity:0.6;
 ```
 
-> Today the apps consume core/ui via local `file:` deps (not yet published) —
-> [ADR-0004](adr/0004-file-deps-until-packages-published.md).
+All three packages are published to GitHub Packages (`npm.pkg.github.com`) and consumed via
+versioned registry deps. See [ADR-0004](adr/0004-file-deps-until-packages-published.md).
+
+---
+
+## Backend service pattern
+
+Every backend service follows the same shape, enforced by `onelifestack-commons`.
+
+```mermaid
+flowchart LR
+  client[Client\nbrowser / portal] -->|Bearer Firebase token| filter[FirebaseAuthFilter\ncommons]
+  filter --> controller[Controller\nthin]
+  controller --> service[Service\nbusiness logic]
+  service --> repo[Repository\nSpring Data JPA]
+  repo --> db[(own DB\nPostgres)]
+  service -->|within @Transactional| outbox[OutboxEvent\ncommons]
+  outbox --> relay[OutboxRelay\ncommons @Scheduled]
+  relay --> kafka[(Kafka)]
+```
+
+Key properties: stateless (no sessions), constructor injection only, Flyway migrations,
+`ddl-auto: validate`, `CurrentUser.require()` for ownership scoping.
