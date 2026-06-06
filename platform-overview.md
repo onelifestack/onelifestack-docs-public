@@ -31,7 +31,7 @@ OneLifeStack is a **multi-client life-management platform** reached through web,
 
 See the [architecture diagrams](architecture.md) for the C4 context and container views.
 
-## Services live today (2026-06-05)
+## Services live today (2026-06-06)
 
 All services run in a homelab k3s dev cluster. Each owns its own Postgres database.
 
@@ -40,16 +40,21 @@ All services run in a homelab k3s dev cluster. Each owns its own Postgres databa
 | `identity-people-service` | Canonical People graph, onboarding, AI settings, AccessGrant |
 | `memory-service` | Memories as life-graph nodes (Journal/Trip/Milestone/Reflection/Moment) |
 | `productivity-service` | Habits with confidence-over-streaks; one-tap Today |
-| `finance-service` | Bank statement import, transaction ledger, categorization |
+| `finance-service` | Bank statement import, transaction ledger, categorization, budgets |
 | `ledger-service` | Assets, liabilities, net worth; 15 asset types; People-graph links |
 | `document-service` | Document metadata + server-side upload (PVC default, Drive optional) |
 | `template-service` | Quick-capture template marketplace (curated + community) |
 | `search-service` | Postgres FTS people search; consumes `person.*` events |
-| `notification-service` | In-app notification feed; consumes `person.*` events |
-| `onelifestack-mcp` | MCP stdio server, 12 tools — built + image pushed, not yet deployed |
+| `notification-service` | In-app notification feed; consumes `person.*` + `access.grant.*` events |
+| `onelifestack-mcp` | MCP HTTP multi-user server, 16 tools, `olsat_` agent tokens |
 
-**Portal** (`onelifestack-portal` v0.7.0) surfaces: Life Timeline, Today (habits), Memories,
-Finances, My Legacy, People center, Template marketplace, Account.
+**Portal** (`onelifestack-portal` v1.1.0) surfaces: Life Timeline, Today (habits), Memories,
+Finances (transactions + budgets + recurring), My Legacy, People center, Template marketplace, Account.
+
+**Security posture (2026-06-06):** Rate limiting via Bucket4j active on identity-people-service and
+finance-service (per-UID for authenticated requests, per-IP for unauthenticated). Critical mutations
+(person merges, access grants, AI/BYOK settings changes) emit audit events to `onelifestack.audit.*`
+Kafka topics via the transactional outbox.
 
 **Test coverage:** 197 tests across the platform — unit/slice tests + full-stack E2E tests
 (real Postgres via Zonky embedded-postgres, real HTTP through every controller → DB layer).
