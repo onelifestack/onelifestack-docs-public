@@ -16,4 +16,9 @@ done
 # ADRs (preserve the adr/ subpath so nav links resolve).
 cp adr/*.md docs/adr/
 
+# Static assets served at the site root (e.g. og-image for social previews).
+for f in *.jpg *.png; do
+  [ -f "$f" ] && cp "$f" "docs/$f"
+done
+
 echo "Staged $(find docs -name '*.md' | wc -l) markdown files into ./docs"
