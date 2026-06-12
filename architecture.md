@@ -179,11 +179,11 @@ How the client packages stack — platform-agnostic core, then per-platform UI k
 
 ```mermaid
 flowchart TD
-  core["@onelifestack/core v0.2.5\nauth contract · ApiClient · design tokens\nPeople/Memory/Finance/Ledger/Productivity\nDocument/Template/Search/Notification clients\nno React / Firebase / RN"]
-  uiweb["@onelifestack/ui v0.1.1\nFirebase web adapter · AuthProvider\nTailwind preset · components"]
+  core["@onelifestack/core v0.4.0\nauth contract · ApiClient · design tokens\nPRESETS (life/life-nocturne/platform)\nPeople/Memory/Finance/Ledger/Productivity\nDocument/Template/Search/Notification clients\nno React / Firebase / RN"]
+  uiweb["@onelifestack/ui v0.3.0\nFirebase web adapter · AuthProvider\nTailwind preset (applyPreset, --ols-* + --ols-graph-*) · components"]
   uinative["@onelifestack/ui-native v0.1.0\nRN adapter · AuthProvider · theme"]
   portal["onelifestack-portal (web) v0.7.0"]
-  comsite["onelifestack.com (web) v1.19.0"]
+  comsite["onelifestack.com (web) v1.22.0"]
   mobile["Expo mobile (planned)"]:::planned
 
   core --> uiweb
