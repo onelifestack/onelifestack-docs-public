@@ -31,16 +31,32 @@ OneLifeStack is a **multi-client life-management platform** reached through web,
 
 See the [architecture diagrams](architecture.md) for the C4 context and container views.
 
-## Services live today (2026-06-06)
+## Life domains
+
+The platform is organised into 7 life domains — each a distinct space in the portal:
+
+| Domain | Backend | Status |
+|---|---|---|
+| Memories | `memory-service` | V1 live |
+| People & Care | `identity-people-service` | V1 live |
+| Wealth | `finance-service` + `ledger-service` | V1 live |
+| Growth | `productivity-service` | V2 live (weekly view, confidence explainer) |
+| Legacy | `identity-people-service` + `ledger-service` | V1 live |
+| Knowledge | — (not yet built) | V1 design proposed |
+| Archives | `document-service` + `identity-people-service` | V1 design proposed |
+
+Quick capture is the entry point for every domain — one question, saves immediately, optional expand.
+
+## Services live today (2026-06-16)
 
 All services run in a homelab k3s dev cluster. Each owns its own Postgres database.
 
 | Service | Role |
 |---|---|
-| `identity-people-service` | Canonical People graph, onboarding, AI settings, AccessGrant |
+| `identity-people-service` | Canonical People graph, onboarding, AI settings, AccessGrant, preview import |
 | `memory-service` | Memories as life-graph nodes (Journal/Trip/Milestone/Reflection/Moment) |
-| `productivity-service` | Habits with confidence-over-streaks; one-tap Today |
-| `finance-service` | Bank statement import, transaction ledger, categorization, budgets |
+| `productivity-service` | Habits with confidence-over-streaks; one-tap Today; weekly grid |
+| `finance-service` | Bank statement import, transaction ledger, categorization, budgets, recurring |
 | `ledger-service` | Assets, liabilities, net worth; 15 asset types; People-graph links |
 | `document-service` | Document metadata + server-side upload (PVC default, Drive optional) |
 | `template-service` | Quick-capture template marketplace (curated + community) |
@@ -48,13 +64,11 @@ All services run in a homelab k3s dev cluster. Each owns its own Postgres databa
 | `notification-service` | In-app notification feed; consumes `person.*` + `access.grant.*` events |
 | `onelifestack-mcp` | MCP HTTP multi-user server, 16 tools, `olsat_` agent tokens |
 
-**Portal** (`onelifestack-portal` v1.1.0) surfaces: Life Timeline, Today (habits), Memories,
-Finances (transactions + budgets + recurring), My Legacy, People center, Template marketplace, Account.
+**Portal** (`onelifestack-portal` v1.21.0) surfaces 7 Life Spaces via a Dock-based tab host. Guest-first with per-space conversion prompts for Tier-2 spaces (Wealth, People, Legacy).
 
-**Security posture (2026-06-06):** Rate limiting via Bucket4j active on identity-people-service and
-finance-service (per-UID for authenticated requests, per-IP for unauthenticated). Critical mutations
-(person merges, access grants, AI/BYOK settings changes) emit audit events to `onelifestack.audit.*`
-Kafka topics via the transactional outbox.
+**Marketing site** (`onelifestack.com` v1.33.0): dark connected-life design; local-first `/preview` mode (IndexedDB, no account required); import handoff to portal on sign-in.
 
-**Test coverage:** 197 tests across the platform — unit/slice tests + full-stack E2E tests
+**Security posture (2026-06-16):** Rate limiting via Bucket4j active on **all 8 backend services** (per-UID authenticated, per-IP unauthenticated). `CorrelationIdFilter` + `RequestAuditFilter` in commons give every service correlation IDs + structured audit logs. BYOK keys protected via `/internal/v1/` + shared secret. Document-service has MIME allowlist + 25MB cap.
+
+**Test coverage:** 197+ tests across the platform — unit/slice tests + full-stack E2E tests
 (real Postgres via Zonky embedded-postgres, real HTTP through every controller → DB layer).
