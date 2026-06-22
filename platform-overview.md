@@ -37,17 +37,17 @@ The platform is organised into 7 life domains — each a distinct space in the p
 
 | Domain | Backend | Status |
 |---|---|---|
-| Memories | `memory-service` | V1 live |
+| Memories | `memory-service` | V3 live — tags, On This Day, experiences (food/film/place/music), person-filter |
 | People & Care | `identity-people-service` | V1 live |
 | Wealth | `finance-service` + `ledger-service` | V1 live |
-| Growth | `productivity-service` | V2 live (weekly view, confidence explainer) |
-| Legacy | `identity-people-service` + `ledger-service` | V1 live |
-| Knowledge | — (not yet built) | V1 design proposed |
-| Archives | `document-service` + `identity-people-service` | V1 design proposed |
+| Growth | `productivity-service` | V3 live (weekly view, confidence explainer, archive) |
+| Legacy | `identity-people-service` + `ledger-service` | V2 live |
+| Knowledge | `knowledge-service` | V2 live (books, ideas, learnings; read status) |
+| Archives | `document-service` + `archives-service` + `life-graph-service` | V2 live (artefacts, records, life objects, responsibilities, life events) |
 
 Quick capture is the entry point for every domain — one question, saves immediately, optional expand.
 
-## Services live today (2026-06-16)
+## Services live today (2026-06-22)
 
 All services run in a homelab k3s dev cluster. Each owns its own Postgres database.
 
