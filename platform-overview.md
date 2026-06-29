@@ -31,44 +31,48 @@ OneLifeStack is a **multi-client life-management platform** reached through web,
 
 See the [architecture diagrams](architecture.md) for the C4 context and container views.
 
-## Life domains
+## Life lenses
 
-The platform is organised into 7 life domains — each a distinct space in the portal:
+The platform is organised into **7 human-centred lenses** — each answers a question about life,
+not a software category. They appear in the Dock (portal + /preview) in this canonical order:
 
-| Domain | Backend | Status |
-|---|---|---|
-| Memories | `memory-service` | V3 live — tags, On This Day, experiences (food/film/place/music), person-filter |
-| People & Care | `identity-people-service` | V1 live |
-| Wealth | `finance-service` + `ledger-service` | V1 live |
-| Growth | `productivity-service` | V3 live (weekly view, confidence explainer, archive) |
-| Legacy | `identity-people-service` + `ledger-service` | V2 live |
-| Knowledge | `knowledge-service` | V2 live (books, ideas, learnings; read status) |
-| Archives | `document-service` + `archives-service` + `life-graph-service` | V2 live (artefacts, records, life objects, responsibilities, life events) |
+| Lens | Question | Backend | Status |
+|---|---|---|---|
+| **Memories** | What do I want to remember? | `memory` (monolith) | V3 live — tags, On This Day, experiences, person-filter |
+| **People** | Who matters to me? | `identity` (monolith) | V1 live |
+| **Self** | How am I doing and becoming? | `productivity` (monolith) | V3 live (Today, habits, goals, vision, mood sparkline) |
+| **Responsibilities** | What needs care? | `finance` + `ledger` + `lifegraph` (monolith) | V1 live (finances, life objects, recurring, budgets) |
+| **Work & Purpose** | What am I building and growing through? | `productivity` (monolith) | Goals + Vision tabs live |
+| **Passions** | What brings me joy? | `knowledge` (monolith) | V2 live (books, ideas, learnings; read status) |
+| **Legacy** | What should remain? | `document` + `archives` + `lifegraph` (monolith) | V1 live (documents, artefacts, records, life events) |
 
-Quick capture is the entry point for every domain — one question, saves immediately, optional expand.
+Quick capture is the entry point for every lens — one question, saves immediately, optional expand.
 
-## Services live today (2026-06-22)
+## Platform today (2026-06-29)
 
-All services run in a homelab k3s dev cluster. Each owns its own Postgres database.
+All 12 domain packages run in a **single modular monolith** (`onelifestack-platform` v0.1.7), one Spring Boot 3.4.4 process, one `platform` Postgres DB with 12 schemas managed by per-schema Flyway.
 
-| Service | Role |
+| Domain package | Role |
 |---|---|
-| `identity-people-service` | Canonical People graph, onboarding, AI settings, AccessGrant, preview import |
-| `memory-service` | Memories as life-graph nodes (Journal/Trip/Milestone/Reflection/Moment) |
-| `productivity-service` | Habits with confidence-over-streaks; one-tap Today; weekly grid |
-| `finance-service` | Bank statement import, transaction ledger, categorization, budgets, recurring |
-| `ledger-service` | Assets, liabilities, net worth; 15 asset types; People-graph links |
-| `document-service` | Document metadata + server-side upload (PVC default, Drive optional) |
-| `template-service` | Quick-capture template marketplace (curated + community) |
-| `search-service` | Postgres FTS people search; consumes `person.*` events |
-| `notification-service` | In-app notification feed; consumes `person.*` + `access.grant.*` events |
-| `onelifestack-mcp` | MCP HTTP multi-user server, 16 tools, `olsat_` agent tokens |
+| `identity` | Canonical People graph, onboarding, AI settings, AccessGrant, preview import |
+| `memory` | Memories as life-graph nodes (Journal/Trip/Milestone/Reflection/Moment) |
+| `productivity` | Habits with confidence-over-streaks; one-tap Today; weekly grid; goals; vision |
+| `finance` | Bank statement import, transaction ledger, categorization, budgets, recurring |
+| `ledger` | Assets, liabilities, net worth; 15 asset types; People-graph links |
+| `document` | Document metadata + server-side upload (PVC default, Drive optional) |
+| `template` | Quick-capture template marketplace (curated + community) |
+| `search` | Postgres FTS search (persons + memories); consumes domain events |
+| `notification` | In-app notification feed; consumes domain events |
+| `knowledge` | Books, ideas, learnings; read status + progress |
+| `archives` | Artefacts, records |
+| `lifegraph` | LifeObjects, Places, Responsibilities, LifeEvents, Vendors — cross-domain connective layer |
 
-**Portal** (`onelifestack-portal` v1.21.0) surfaces 7 Life Spaces via a Dock-based tab host. Guest-first with per-space conversion prompts for Tier-2 spaces (Wealth, People, Legacy).
+**Portal** (`onelifestack-portal` v1.48.0): 7-lens Dock-based tab host. Guest-first with per-lens conversion prompts. **Manrope** font throughout (matches `life` preset). All API URLs → `platform.onelifestack.homelab.local`.
 
-**Marketing site** (`onelifestack.com` v1.33.0): dark connected-life design; local-first `/preview` mode (IndexedDB, no account required); import handoff to portal on sign-in.
+**Marketing site** (`onelifestack.com` v1.37.0): dark `life-nocturne` design; local-first `/preview` mode with 7-lens Dock (canonical order + icons matching portal); `LIFE_SPACES` driven by 7-lens model with human questions; import handoff to portal on sign-in.
 
-**Security posture (2026-06-16):** Rate limiting via Bucket4j active on **all 8 backend services** (per-UID authenticated, per-IP unauthenticated). `CorrelationIdFilter` + `RequestAuditFilter` in commons give every service correlation IDs + structured audit logs. BYOK keys protected via `/internal/v1/` + shared secret. Document-service has MIME allowlist + 25MB cap.
+**MCP** (`onelifestack-mcp` v0.2.1): 16 tools, `olsat_` agent tokens, provider-neutral (Anthropic + OpenAI). Live at `mcp.onelifestack.homelab.local`.
 
-**Test coverage:** 197+ tests across the platform — unit/slice tests + full-stack E2E tests
-(real Postgres via Zonky embedded-postgres, real HTTP through every controller → DB layer).
+**Security posture:** Rate limiting via Bucket4j (per-UID authenticated, per-IP unauthenticated). `CorrelationIdFilter` + `RequestAuditFilter` in commons. BYOK keys protected via `/internal/v1/`. Document-service has MIME allowlist + 25MB cap.
+
+**Test coverage:** 197+ tests across the platform — unit/slice tests + full-stack E2E tests.
